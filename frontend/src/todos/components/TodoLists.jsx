@@ -1,73 +1,333 @@
-import React, { Fragment, useState, useEffect } from 'react'
-import Card from '@material-ui/core/Card'
-import CardContent from '@material-ui/core/CardContent'
-import List from '@material-ui/core/List'
-import ListItem from '@material-ui/core/ListItem'
-import ListItemText from '@material-ui/core/ListItemText'
-import ListItemIcon from '@material-ui/core/ListItemIcon'
-import ReceiptIcon from '@material-ui/icons/Receipt'
-import Typography from '@material-ui/core/Typography'
-import { TodoListForm } from './TodoListForm'
+import React, { Fragment, useState, useEffect } from "react";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import ReceiptIcon from "@material-ui/icons/Receipt";
+import Typography from "@material-ui/core/Typography";
+import DeleteIcon from "@material-ui/icons/Delete";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import { CardActions, Button, TextField } from "@material-ui/core";
+import { makeStyles } from "@material-ui/styles";
+import { TodoListForm } from "./TodoListForm";
+import { v4 as uuidv4 } from "uuid";
+import { debounce } from "lodash";
 
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+const useStyles = makeStyles({
+  completed: {
+    textAlign: "end",
+  },
+  listTitle: {
+    paddingRight: "10px",
+    width: "90px",
+    "& span": {
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+    },
+  },
+  deleteButton: {
+    minWidth: "50px",
+  },
+  editButton: {
+    minWidth: "35px",
+  },
+});
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const getPersonalTodos = () => {
-  return sleep(1000).then(() => Promise.resolve({
-    '0000000001': {
-      id: '0000000001',
-      title: 'First List',
-      todos: ['First todo of first list!']
+  return sleep(1000).then(() => Promise.resolve(getData()));
+};
+
+const getData = () => {
+  return fetch("http://localhost:3001/todolist/list", {
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
-    '0000000002': {
-      id: '0000000002',
-      title: 'Second List',
-      todos: ['First todo of second list!']
-    }
-  }))
-}
+  }).then(async (response) => {
+    const data = await response.json();
+    return data;
+  });
+};
 
 export const TodoLists = ({ style }) => {
-  const [todoLists, setTodoLists] = useState({})
-  const [activeList, setActiveList] = useState()
+  const classes = useStyles();
+
+  const [todoLists, setTodoLists] = useState({});
+  const [activeList, setActiveList] = useState();
+  const [tempListTitle, setTempListTitle] = useState("");
+  const [openAddModal, setOpenAddModal] = useState(false);
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [tempListIdToEdit, setTempListIdToEdit] = useState("");
+
+  const delayedHandleChange = debounce(
+    (eventData) => handleEditListCall(eventData),
+    1000
+  );
 
   useEffect(() => {
-    getPersonalTodos()
-      .then(setTodoLists)
-  }, [])
+    getPersonalTodos().then(setTodoLists);
+  }, []);
 
-  if (!Object.keys(todoLists).length) return null
-  return <Fragment>
-    <Card style={style}>
-      <CardContent>
-        <Typography
-          component='h2'
-        >
-          My Todo Lists
-        </Typography>
-        <List>
-          {Object.keys(todoLists).map((key) => <ListItem
-            key={key}
-            button
-            onClick={() => setActiveList(key)}
-          >
-            <ListItemIcon>
-              <ReceiptIcon />
-            </ListItemIcon>
-            <ListItemText primary={todoLists[key].title} />
-          </ListItem>)}
-        </List>
-      </CardContent>
-    </Card>
-    {todoLists[activeList] && <TodoListForm
-      key={activeList} // use key to make React recreate component to reset internal state
-      todoList={todoLists[activeList]}
-      saveTodoList={(id, { todos }) => {
-        const listToUpdate = todoLists[id]
-        setTodoLists({
-          ...todoLists,
-          [id]: { ...listToUpdate, todos }
-        })
-      }}
-    />}
-  </Fragment>
-}
+  useEffect(() => {
+    console.log(todoLists);
+  }, [todoLists]);
+
+  useEffect(() => {
+    console.log(activeList);
+  }, [activeList]);
+
+  useEffect(() => {
+    console.log(tempListTitle);
+    if (tempListIdToEdit !== "") {
+      let existingLists = todoLists;
+
+      existingLists[tempListIdToEdit].title = tempListTitle;
+      delayedHandleChange(existingLists[tempListIdToEdit]);
+      setTodoLists(existingLists);
+    }
+  }, [tempListTitle, tempListIdToEdit, todoLists, delayedHandleChange]);
+
+  const handleCloseAddModal = () => {
+    setOpenAddModal(false);
+    setTempListTitle("");
+  };
+
+  const handleOpenAddModal = () => {
+    setOpenAddModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setOpenEditModal(false);
+    setTempListTitle("");
+    setTempListIdToEdit("");
+  };
+
+  const handleOpenEditModal = (listId) => {
+    setOpenEditModal(true);
+    setTempListIdToEdit(listId);
+    setTempListTitle(todoLists[listId].title);
+  };
+
+  const handleAddNewListCall = (list) => {
+    fetch("http://localhost:3001/todolist/addlist", {
+      method: "POST",
+      body: JSON.stringify(list),
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    })
+      .then(function (response) {
+        if (response.ok) {
+          return response.text();
+        }
+        throw new Error("Something went wrong.");
+      })
+      .then(function (text) {
+        console.log("Request successful", text);
+      })
+      .catch(function (error) {
+        console.log("Request failed", error);
+      });
+  };
+
+  const handleDeleteListCall = (listId) => {
+    fetch("http://localhost:3001/todolist/list/" + listId, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    })
+      .then(function (response) {
+        if (response.ok) {
+          return response.text();
+        }
+        throw new Error("Something went wrong.");
+      })
+      .then(function (text) {
+        console.log("Request successful", text);
+      })
+      .catch(function (error) {
+        console.log("Request failed", error);
+      });
+  };
+
+  const handleEditListCall = (listItem) => {
+    fetch("http://localhost:3001/todolist/list/" + listItem.id, {
+      method: "PUT",
+      body: JSON.stringify(listItem),
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    })
+      .then(function (response) {
+        if (response.ok) {
+          return response.text();
+        }
+        throw new Error("Something went wrong.");
+      })
+      .then(function (text) {
+        console.log("Request successful", text);
+      })
+      .catch(function (error) {
+        console.log("Request failed", error);
+      });
+  };
+
+  const handleAddNewList = () => {
+    setOpenAddModal(true);
+
+    let existingLists = todoLists;
+    let tempId = uuidv4();
+    let obj = {
+      id: tempId,
+      title: tempListTitle,
+      todos: [],
+    };
+    existingLists[tempId] = obj;
+    handleAddNewListCall(obj);
+    setTodoLists(existingLists);
+    setOpenAddModal(false);
+    setTempListTitle("");
+  };
+
+  const handleDeleteList = (listId) => {
+    let { [listId]: tmp, ...rest } = todoLists;
+    setTodoLists(rest);
+    handleDeleteListCall(listId);
+  };
+
+  //if (!Object.keys(todoLists).length) return null;
+  return (
+    <Fragment>
+      <Card style={style}>
+        <CardContent>
+          <Typography component="h2">My Todo Lists</Typography>
+          <List>
+            {Object.keys(todoLists).map((key) => (
+              <ListItem key={key} button onClick={() => setActiveList(key)}>
+                <ListItemIcon>
+                  <Button
+                    size="small"
+                    className={classes.editButton}
+                    onClick={() => {
+                      handleOpenEditModal(todoLists[key].id);
+                    }}
+                  >
+                    <ReceiptIcon />
+                  </Button>
+                </ListItemIcon>
+                <ListItemText
+                  className={classes.listTitle}
+                  primary={todoLists[key].title}
+                />
+                <ListItemText
+                  className={classes.completed}
+                  primary={
+                    todoLists[key].todos.length > 0 &&
+                    todoLists[key].todos.every((item) => item.done === true)
+                      ? "Done!"
+                      : ""
+                  }
+                />
+                <Button
+                  size="small"
+                  color="secondary"
+                  className={classes.deleteButton}
+                  onClick={() => {
+                    handleDeleteList(todoLists[key].id);
+                  }}
+                >
+                  <DeleteIcon />
+                </Button>
+              </ListItem>
+            ))}
+          </List>
+          <CardActions>
+            <Button
+              type="button"
+              onClick={handleOpenAddModal}
+              variant="contained"
+              color="primary"
+            >
+              Add new list
+            </Button>
+          </CardActions>
+        </CardContent>
+      </Card>
+      {todoLists[activeList] && (
+        <TodoListForm
+          key={activeList} // use key to make React recreate component to reset internal state
+          todoList={todoLists[activeList]}
+          saveTodoList={(id, { todos }) => {
+            const listToUpdate = todoLists[id];
+            setTodoLists({
+              ...todoLists,
+              [id]: { ...listToUpdate, todos },
+            });
+          }}
+        />
+      )}
+      <Dialog open={openAddModal} onClose={handleCloseAddModal}>
+        <DialogTitle>Add a new to-do list</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Please enter a title for your new list.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="titleList"
+            label="Title"
+            type="text"
+            fullWidth
+            variant="standard"
+            value={tempListTitle}
+            onChange={(event) => {
+              setTempListTitle(event.target.value);
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAddModal}>Cancel</Button>
+          <Button onClick={handleAddNewList}>Add</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={openEditModal} onClose={handleCloseEditModal}>
+        <DialogTitle>Edit list</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Edit the title of the list. (Changes will be autosaved.)
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="titleList"
+            label="Title"
+            type="text"
+            fullWidth
+            variant="standard"
+            value={tempListTitle}
+            onChange={(event) => {
+              setTempListTitle(event.target.value);
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditModal}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+    </Fragment>
+  );
+};
