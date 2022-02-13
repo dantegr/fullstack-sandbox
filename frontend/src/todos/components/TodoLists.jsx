@@ -70,7 +70,7 @@ export const TodoLists = ({ style }) => {
 
   const delayedHandleChange = debounce(
     (eventData) => handleEditListCall(eventData),
-    1000
+    500
   );
 
   useEffect(() => {
@@ -78,15 +78,6 @@ export const TodoLists = ({ style }) => {
   }, []);
 
   useEffect(() => {
-    console.log(todoLists);
-  }, [todoLists]);
-
-  useEffect(() => {
-    console.log(activeList);
-  }, [activeList]);
-
-  useEffect(() => {
-    console.log(tempListTitle);
     if (tempListIdToEdit !== "") {
       let existingLists = todoLists;
 

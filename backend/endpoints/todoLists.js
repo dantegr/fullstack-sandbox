@@ -14,6 +14,13 @@ const getListData = () => {
   return JSON.parse(jsonData);
 };
 
+// get all lists
+todoListRoutes.get("/todolist/list", (req, res) => {
+  const lists = getListData();
+  res.send(lists);
+});
+
+// add new list
 todoListRoutes.post("/todolist/addlist", (req, res) => {
   var existingLists = getListData();
 
@@ -31,6 +38,7 @@ todoListRoutes.post("/todolist/addlist", (req, res) => {
   res.send({ success: true, msg: "list added successfully" });
 });
 
+// delete list
 todoListRoutes.delete("/todolist/list/:listid", (req, res) => {
   var existingLists = getListData();
   const listId = req.params["listid"];
@@ -42,96 +50,7 @@ todoListRoutes.delete("/todolist/list/:listid", (req, res) => {
   res.send({ success: true, msg: "list removed successfully" });
 });
 
-todoListRoutes.post("/todolist/list/:listid/addtodo", (req, res) => {
-  var existingLists = getListData();
-  const listId = req.params["listid"];
-
-  const newtodoId = uuidv4();
-
-  let itemToAdd = req.body;
-
-  itemToAdd.id = newtodoId;
-
-  existingLists[listId].todos.push(itemToAdd);
-
-  console.log(existingLists);
-  saveListData(existingLists);
-  res.send({ success: true, msg: "item added successfully" });
-});
-
-todoListRoutes.delete(
-  "/todolist/list/:listid/todo/:todoid/delete",
-  (req, res) => {
-    var existingLists = getListData();
-    const listId = req.params["listid"];
-    const todoId = req.params["todoid"];
-
-    existingLists[listId].todos = existingLists[listId].todos.filter(
-      (item) => item.id != todoId
-    );
-
-    console.log(existingLists);
-    saveListData(existingLists);
-    res.send({ success: true, msg: "item removed successfully" });
-  }
-);
-
-todoListRoutes.put("/todolist/list/:listid/todo/update", (req, res) => {
-  var existingLists = getListData();
-  const listId = req.params["listid"];
-
-  let itemsToUpdate = req.body;
-
-  console.log(req.body);
-
-  existingLists[listId].todos = itemsToUpdate;
-
-  saveListData(existingLists);
-  res.send({ success: true, msg: "items updated successfully" });
-});
-
-todoListRoutes.put("/todolist/list/:listid/todo/:todoid/update", (req, res) => {
-  var existingLists = getListData();
-  const listId = req.params["listid"];
-  const todoId = req.params["todoid"];
-
-  let itemToUpdate = req.body;
-
-  itemToUpdate.id = todoId;
-
-  let objIndex = existingLists[listId].todos.findIndex(
-    (item) => item.id === todoId
-  );
-
-  existingLists[listId].todos[objIndex] = itemToUpdate;
-
-  console.log(existingLists);
-  saveListData(existingLists);
-  res.send({ success: true, msg: "item updated successfully" });
-});
-
-todoListRoutes.get("/todolist/list", (req, res) => {
-  const lists = getListData();
-  res.send(lists);
-});
-
-todoListRoutes.get("/todolist/list/:id", (req, res) => {
-  var existingLists = getListData();
-  const listId = req.params["id"];
-
-  console.log(existingLists[listId]);
-  res.send(existingLists[listId]);
-});
-
-todoListRoutes.get("/todolist/list/:listid/todo/:todoid", (req, res) => {
-  var existingLists = getListData();
-  const listId = req.params["listid"];
-  const todoId = req.params["todoid"];
-
-  console.log(existingLists[listId]);
-  res.send(existingLists[listId].todos.find((e) => e.id === todoId));
-});
-
+// update list
 todoListRoutes.put("/todolist/list/:id", (req, res) => {
   var existingLists = getListData();
   fs.readFile(
@@ -145,6 +64,21 @@ todoListRoutes.put("/todolist/list/:id", (req, res) => {
     },
     true
   );
+});
+
+// update todos of each list
+todoListRoutes.put("/todolist/list/:listid/todo/update", (req, res) => {
+  var existingLists = getListData();
+  const listId = req.params["listid"];
+
+  let itemsToUpdate = req.body;
+
+  console.log(req.body);
+
+  existingLists[listId].todos = itemsToUpdate;
+
+  saveListData(existingLists);
+  res.send({ success: true, msg: "items updated successfully" });
 });
 
 module.exports = todoListRoutes;
