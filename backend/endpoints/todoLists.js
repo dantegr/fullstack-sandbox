@@ -51,19 +51,13 @@ todoListRoutes.delete("/todolist/list/:listid", (req, res) => {
 });
 
 // update list
-todoListRoutes.put("/todolist/list/:id", (req, res) => {
+todoListRoutes.put("/todolist/list/:listid", (req, res) => {
   var existingLists = getListData();
-  fs.readFile(
-    dataPath,
-    "utf8",
-    () => {
-      const listId = req.params["id"];
-      existingLists[listId] = req.body;
-      saveListData(existingLists);
-      res.send(`list with id ${listId} has been updated`);
-    },
-    true
-  );
+
+  const listId = req.params["listid"];
+  existingLists[listId] = req.body;
+  saveListData(existingLists);
+  res.send(`list with id ${listId} has been updated`);
 });
 
 // update todos of each list
