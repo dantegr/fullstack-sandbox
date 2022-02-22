@@ -40,12 +40,6 @@ const useStyles = makeStyles({
   },
 });
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const getPersonalTodos = () => {
-  return sleep(1000).then(() => Promise.resolve(getData()));
-};
-
 const getData = () => {
   return fetch("http://localhost:3001/todolist/list", {
     headers: {
@@ -74,7 +68,7 @@ export const TodoLists = ({ style }) => {
   );
 
   useEffect(() => {
-    getPersonalTodos().then(setTodoLists);
+    getData().then(setTodoLists);
   }, []);
 
   useEffect(() => {

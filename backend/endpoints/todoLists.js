@@ -54,7 +54,7 @@ todoListRoutes.delete("/todolist/list/:listid", (req, res) => {
 todoListRoutes.put("/todolist/list/:listid", (req, res) => {
   var existingLists = getListData();
 
-  const listId = req.params["listid"];
+  const listId = req.params.listid;
   existingLists[listId] = req.body;
   saveListData(existingLists);
   res.send(`list with id ${listId} has been updated`);
@@ -63,7 +63,7 @@ todoListRoutes.put("/todolist/list/:listid", (req, res) => {
 // update todos of each list
 todoListRoutes.put("/todolist/list/:listid/todo/update", (req, res) => {
   var existingLists = getListData();
-  const listId = req.params["listid"];
+  const listId = req.params.listid;
 
   let itemsToUpdate = req.body;
 
