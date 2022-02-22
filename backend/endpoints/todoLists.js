@@ -1,7 +1,7 @@
 const express = require("express");
 const todoListRoutes = express.Router();
 const fs = require("fs");
-const { v4: uuidv4 } = require("uuid");
+/* const { v4: uuidv4 } = require("uuid"); */
 
 const dataPath = "./db/db.json";
 
@@ -26,16 +26,12 @@ todoListRoutes.post("/todolist/addlist", (req, res) => {
 
   if (req.body.id) {
     existingLists[req.body.id] = req.body;
+
+    saveListData(existingLists);
+    res.send({ success: true, msg: "list added successfully" });
   } else {
-    const newListId = uuidv4();
-
-    existingLists[newListId] = req.body;
-    existingLists[newListId].id = newListId;
+    res.send({ success: false, msg: "id is missing" });
   }
-
-  console.log(existingLists);
-  saveListData(existingLists);
-  res.send({ success: true, msg: "list added successfully" });
 });
 
 // delete list

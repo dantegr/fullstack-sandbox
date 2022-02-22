@@ -52,6 +52,34 @@ const getData = () => {
   });
 };
 
+const handleEditListCall = (listItem) => {
+  fetch("http://localhost:3001/todolist/list/" + listItem.id, {
+    method: "PUT",
+    body: JSON.stringify(listItem),
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  })
+    .then(function (response) {
+      if (response.ok) {
+        return response.text();
+      }
+      throw new Error("Something went wrong.");
+    })
+    .then(function (text) {
+      console.log("Request successful", text);
+    })
+    .catch(function (error) {
+      console.log("Request failed", error);
+    });
+};
+
+const delayedHandleChange = debounce(
+  (eventData) => handleEditListCall(eventData),
+  500
+);
+
 export const TodoLists = ({ style }) => {
   const classes = useStyles();
 
@@ -61,11 +89,6 @@ export const TodoLists = ({ style }) => {
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [tempListIdToEdit, setTempListIdToEdit] = useState("");
-
-  const delayedHandleChange = debounce(
-    (eventData) => handleEditListCall(eventData),
-    500
-  );
 
   useEffect(() => {
     getData().then(setTodoLists);
@@ -79,7 +102,7 @@ export const TodoLists = ({ style }) => {
       delayedHandleChange(existingLists[tempListIdToEdit]);
       setTodoLists(existingLists);
     }
-  }, [tempListTitle, tempListIdToEdit, todoLists, delayedHandleChange]);
+  }, [tempListTitle, tempListIdToEdit, todoLists]);
 
   const handleCloseAddModal = () => {
     setOpenAddModal(false);
@@ -147,40 +170,17 @@ export const TodoLists = ({ style }) => {
       });
   };
 
-  const handleEditListCall = (listItem) => {
-    fetch("http://localhost:3001/todolist/list/" + listItem.id, {
-      method: "PUT",
-      body: JSON.stringify(listItem),
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-    })
-      .then(function (response) {
-        if (response.ok) {
-          return response.text();
-        }
-        throw new Error("Something went wrong.");
-      })
-      .then(function (text) {
-        console.log("Request successful", text);
-      })
-      .catch(function (error) {
-        console.log("Request failed", error);
-      });
-  };
-
   const handleAddNewList = () => {
     setOpenAddModal(true);
 
     let existingLists = todoLists;
-    let tempId = uuidv4();
+    let listId = uuidv4();
     let obj = {
-      id: tempId,
+      id: listId,
       title: tempListTitle,
       todos: [],
     };
-    existingLists[tempId] = obj;
+    existingLists[listId] = obj;
     handleAddNewListCall(obj);
     setTodoLists(existingLists);
     setOpenAddModal(false);
