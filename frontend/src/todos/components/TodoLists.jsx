@@ -94,15 +94,19 @@ export const TodoLists = ({ style }) => {
     getData().then(setTodoLists);
   }, []);
 
-  useEffect(() => {
-    if (tempListIdToEdit !== "") {
+  /* useEffect(() => {
+    if (
+      tempListIdToEdit !== "" &&
+      tempListTitle !== todoLists[tempListIdToEdit].title
+    ) {
       let existingLists = todoLists;
 
       existingLists[tempListIdToEdit].title = tempListTitle;
+
       delayedHandleChange(existingLists[tempListIdToEdit]);
       setTodoLists(existingLists);
     }
-  }, [tempListTitle, tempListIdToEdit, todoLists]);
+  }, [tempListTitle, tempListIdToEdit, todoLists]); */
 
   const handleCloseAddModal = () => {
     setOpenAddModal(false);
@@ -123,6 +127,14 @@ export const TodoLists = ({ style }) => {
     setOpenEditModal(true);
     setTempListIdToEdit(listId);
     setTempListTitle(todoLists[listId].title);
+  };
+
+  const handleOnChangeEditList = (textValue) => {
+    let existingLists = todoLists;
+    existingLists[tempListIdToEdit].title = textValue;
+    delayedHandleChange(existingLists[tempListIdToEdit]);
+    setTempListTitle(textValue);
+    setTodoLists(existingLists);
   };
 
   const handleAddNewListCall = (list) => {
@@ -305,7 +317,8 @@ export const TodoLists = ({ style }) => {
             variant="standard"
             value={tempListTitle}
             onChange={(event) => {
-              setTempListTitle(event.target.value);
+              /* setTempListTitle(event.target.value); */
+              handleOnChangeEditList(event.target.value);
             }}
           />
         </DialogContent>
