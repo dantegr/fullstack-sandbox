@@ -80,6 +80,43 @@ const delayedHandleChange = debounce(
   500
 );
 
+const UpdateListName = ({
+  openEditModal,
+  handleCloseEditModal,
+  handleOnChangeEditList,
+  title,
+}) => {
+  const [tempListTitle, setTempListTitle] = useState(title);
+
+  return (
+    <Dialog open={openEditModal} onClose={handleCloseEditModal}>
+      <DialogTitle>Edit list</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          Edit the title of the list. (Changes will be autosaved.)
+        </DialogContentText>
+        <TextField
+          autoFocus
+          margin="dense"
+          id="titleList"
+          label="Title"
+          type="text"
+          fullWidth
+          variant="standard"
+          value={tempListTitle}
+          onChange={(event) => {
+            setTempListTitle(event.target.value);
+            handleOnChangeEditList(event.target.value);
+          }}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCloseEditModal}>Cancel</Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 export const TodoLists = ({ style }) => {
   const classes = useStyles();
 
@@ -93,20 +130,6 @@ export const TodoLists = ({ style }) => {
   useEffect(() => {
     getData().then(setTodoLists);
   }, []);
-
-  /* useEffect(() => {
-    if (
-      tempListIdToEdit !== "" &&
-      tempListTitle !== todoLists[tempListIdToEdit].title
-    ) {
-      let existingLists = todoLists;
-
-      existingLists[tempListIdToEdit].title = tempListTitle;
-
-      delayedHandleChange(existingLists[tempListIdToEdit]);
-      setTodoLists(existingLists);
-    }
-  }, [tempListTitle, tempListIdToEdit, todoLists]); */
 
   const handleCloseAddModal = () => {
     setOpenAddModal(false);
@@ -301,31 +324,14 @@ export const TodoLists = ({ style }) => {
           <Button onClick={handleAddNewList}>Add</Button>
         </DialogActions>
       </Dialog>
-      <Dialog open={openEditModal} onClose={handleCloseEditModal}>
-        <DialogTitle>Edit list</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Edit the title of the list. (Changes will be autosaved.)
-          </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            id="titleList"
-            label="Title"
-            type="text"
-            fullWidth
-            variant="standard"
-            value={tempListTitle}
-            onChange={(event) => {
-              /* setTempListTitle(event.target.value); */
-              handleOnChangeEditList(event.target.value);
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseEditModal}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
+      {todoLists[tempListIdToEdit] && todoLists[tempListIdToEdit].title && (
+        <UpdateListName
+          title={todoLists[tempListIdToEdit].title}
+          openEditModal={openEditModal}
+          handleCloseEditModal={handleCloseEditModal}
+          handleOnChangeEditList={handleOnChangeEditList}
+        />
+      )}
     </Fragment>
   );
 };
